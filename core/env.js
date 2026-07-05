@@ -1,0 +1,3 @@
+// core/env.js — Environment flag for license system
+var ENV = 'development'; // development (dev) | production (cliente)
+window.ENV = ENV;

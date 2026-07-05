@@ -1,0 +1,47 @@
+<!-- modules/dashboard/module.html — Template Dashboard -->
+<div x-data="dashboardData()" x-init="init()" class="animate__animated animate__fadeIn">
+  <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+    <i class="bi bi-speedometer2 text-primary"></i> Dashboard
+  </h2>
+
+  <!-- Stats cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="stat bg-base-100 rounded-xl shadow-sm border border-base-200">
+      <div class="stat-figure text-secondary"><i class="bi bi-arrow-down-left text-3xl"></i></div>
+      <div class="stat-title">Ingresos del mes</div>
+      <div class="stat-value text-success" id="dash-ingresos">$0</div>
+    </div>
+    <div class="stat bg-base-100 rounded-xl shadow-sm border border-base-200">
+      <div class="stat-figure text-secondary"><i class="bi bi-arrow-up-right text-3xl"></i></div>
+      <div class="stat-title">Egresos del mes</div>
+      <div class="stat-value text-error" id="dash-egresos">$0</div>
+    </div>
+    <div class="stat bg-base-100 rounded-xl shadow-sm border border-base-200">
+      <div class="stat-figure text-secondary"><i class="bi bi-wallet2 text-3xl"></i></div>
+      <div class="stat-title">Saldo del mes</div>
+      <div class="stat-value text-primary" id="dash-saldo">$0</div>
+    </div>
+  </div>
+
+  <!-- Charts & Recent -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="bg-base-100 rounded-xl shadow-sm border border-base-200 p-4">
+      <h3 class="font-semibold mb-3 flex items-center gap-2">
+        <i class="bi bi-pie-chart text-primary"></i> Ingresos vs Egresos
+      </h3>
+      <div class="chart-container" style="position:relative; height:250px; width:100%">
+        <canvas id="dash-donut"></canvas>
+      </div>
+    </div>
+    <div class="bg-base-100 rounded-xl shadow-sm border border-base-200 p-4">
+      <h3 class="font-semibold mb-3 flex items-center gap-2">
+        <i class="bi bi-clock-history text-primary"></i> Últimos movimientos
+      </h3>
+      <div class="space-y-2" id="dash-ultimos">
+        <div class="skeleton h-10 w-full"></div>
+        <div class="skeleton h-10 w-full"></div>
+        <div class="skeleton h-10 w-full"></div>
+      </div>
+    </div>
+  </div>
+</div>

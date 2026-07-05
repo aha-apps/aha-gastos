@@ -1,0 +1,60 @@
+<!-- modules/movimientos/module.html — Template Movimientos -->
+<div x-data="movimientosData()" x-init="init()" class="animate__animated animate__fadeIn">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <h2 class="text-2xl font-bold flex items-center gap-2">
+      <i class="bi bi-arrow-left-right text-primary"></i> Movimientos
+    </h2>
+    <button class="btn btn-primary" onclick="ModMovimientos.abrirForm()">
+      <i class="bi bi-plus-lg"></i> Agregar
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex flex-wrap gap-2 mb-4">
+    <input type="month" class="input input-bordered input-sm" id="filtro-mes"
+           onchange="ModMovimientos._filtroMes=this.value;ModMovimientos._filtrar()">
+    <select class="select select-bordered select-sm" id="filtro-categoria"
+            onchange="ModMovimientos._filtroCategoria=this.value;ModMovimientos._filtrar()">
+      <option value="">Todas las categorías</option>
+    </select>
+    <select class="select select-bordered select-sm" id="filtro-tipo"
+            onchange="ModMovimientos._filtroTipo=this.value;ModMovimientos._filtrar()">
+      <option value="">Todos los tipos</option>
+      <option value="ingreso">Ingresos</option>
+      <option value="egreso">Egresos</option>
+    </select>
+    <span class="badge badge-ghost badge-sm self-center" id="mov-count">0 registros</span>
+  </div>
+
+  <!-- Table -->
+  <div class="overflow-x-auto bg-base-100 rounded-xl shadow-sm border border-base-200">
+    <table class="table table-zebra">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Categoría</th>
+          <th>Monto</th>
+          <th>Nota</th>
+          <th class="text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="mov-tbody">
+        <tr><td colspan="6" class="text-center py-8 text-base-content/40">
+          <div class="skeleton h-8 w-full"></div>
+          <div class="skeleton h-8 w-full mt-2"></div>
+          <div class="skeleton h-8 w-full mt-2"></div>
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty state -->
+  <div id="mov-empty" class="hidden flex flex-col items-center justify-center py-16 text-base-content/50">
+    <i class="bi bi-arrow-left-right text-6xl mb-4"></i>
+    <p class="text-lg mb-4">No hay movimientos</p>
+    <button class="btn btn-primary" onclick="ModMovimientos.abrirForm()">
+      <i class="bi bi-plus-lg"></i> Agregar primero
+    </button>
+  </div>
+</div>

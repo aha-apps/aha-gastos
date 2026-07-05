@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="emerald">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="AHA Gastos — Control de gastos offline para micro-negocios">
+  <meta name="theme-color" content="#059669">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>AHA Gastos</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon-192.svg">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    [x-cloak] { display: none !important; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    .app-content { min-height: calc(100vh - 4rem); }
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+      background: var(--fallback-b1, oklch(var(--b1)));
+      border-top: 1px solid var(--fallback-bc, oklch(var(--bc)/0.1));
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    @media (min-width: 768px) {
+      .bottom-nav { display: none; }
+    }
+    @media (max-width: 767px) {
+      .app-content { padding-bottom: 5rem; }
+      .hide-mobile { display: none !important; }
+    }
+    /* Skeleton shimmer */
+    .sk-el {
+      background: linear-gradient(90deg, var(--fallback-b2, oklch(var(--b2))) 25%,
+        var(--fallback-b3, oklch(var(--b3))) 50%, var(--fallback-b2, oklch(var(--b2))) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+      border-radius: 0.5rem;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .sk-heading { height: 1.5rem; width: 60%; margin-bottom: 1rem; }
+    .sk-card { height: 6rem; width: 100%; margin-bottom: 0.75rem; }
+    .sk-text { height: 0.875rem; width: 80%; margin-bottom: 0.5rem; }
+    .sk-row { height: 3rem; width: 100%; margin-bottom: 0.5rem; }
+    .sk-badge { height: 1.25rem; width: 4rem; display: inline-block; }
+    .sk-chart { height: 12rem; width: 100%; margin-bottom: 1rem; }
+    /* Focus ring accesible */
+    *:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }
+    /* Skip link */
+    .skip-link {
+      position: absolute; top: -100%; left: 0; z-index: 100;
+      background: #059669; color: white; padding: 0.5rem 1rem;
+    }
+    .skip-link:focus { top: 0; }
+  </style>
+</head>
+<body class="bg-base-200 min-h-screen">
+  <a href="#app-content" class="skip-link">Saltar al contenido</a>
+
+  <!-- Alpine loading store (must be before Alpine processes DOM) -->
+  <script>
+    document.addEventListener('alpine:init', function() {
+      if (!Alpine.store('loading')) {
+        Alpine.store('loading', { phase: 'idle', visible: false });
+      }
+      if (!Alpine.store('network')) {
+        Alpine.store('network', { online: navigator.onLine });
+      }
+    });
+  </script>
+
+  <!-- Toast container (always present) -->
+  <div id="toast-container" class="toast toast-top toast-end z-[100]"></div>
+
+  <!-- App Shell -->
+  <div id="app" x-data="appShell()" x-init="init()" class="min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <div class="navbar bg-base-100 shadow-sm sticky top-0 z-40 px-4">
+      <div class="flex-1 flex items-center gap-2">
+        <button class="btn btn-ghost btn-square lg:hidden" @click="$store.sidebarOpen = !$store.sidebarOpen" aria-label="Menú">
+          <i class="bi bi-list text-xl"></i>
+        </button>
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-content font-bold text-sm">G</div>
+          <span class="font-bold text-lg hidden sm:inline">AHA Gastos</span>
+        </div>
+      </div>
+      <div class="flex-none flex items-center gap-1">
+        <!-- Network status -->
+        <span class="badge badge-sm gap-1 hidden sm:inline-flex"
+              :class="$store.network.online ? 'badge-success' : 'badge-error'">
+          <i :class="$store.network.online ? 'bi-wifi' : 'bi-wifi-off'"></i>
+          <span x-text="$store.network.online ? 'En línea' : 'Sin conexión'"></span>
+        </span>
+        <!-- Theme toggle -->
+        <button class="btn btn-ghost btn-sm btn-square" @click="$store.theme.toggleModo()" aria-label="Cambiar tema">
+          <i class="bi bi-moon-fill" x-show="$store.theme.modo === 'claro'"></i>
+          <i class="bi bi-sun-fill" x-show="$store.theme.modo === 'oscuro'"></i>
+        </button>
+        <!-- Search -->
+        <button class="btn btn-ghost btn-sm btn-square hidden sm:inline-flex"
+                @click="$dispatch('cmd-k-shortcut')" aria-label="Buscar (Ctrl+K)">
+          <i class="bi bi-search"></i>
+        </button>
+        <kbd class="hidden lg:inline-flex text-xs text-base-content/40">Ctrl+K</kbd>
+      </div>
+    </div>
+
+    <div class="flex flex-1">
+      <!-- Sidebar desktop -->
+      <aside class="w-64 bg-base-100 border-r border-base-200 min-h-[calc(100vh-4rem)] p-4 hide-mobile">
+        <nav class="space-y-1">
+          <template x-for="mod in modules" :key="mod.id">
+            <a :href="'#' + mod.id"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors"
+               :class="currentModule === mod.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-base-200 text-base-content/70'">
+              <i :class="mod.icono" class="text-lg"></i>
+              <span x-text="mod.titulo"></span>
+            </a>
+          </template>
+        </nav>
+        <hr class="my-4 border-base-200">
+        <button class="btn btn-ghost btn-sm w-full justify-start gap-2 text-base-content/60" @click="exportBackup">
+          <i class="bi bi-download"></i> Exportar datos
+        </button>
+        <button class="btn btn-ghost btn-sm w-full justify-start gap-2 text-base-content/60" @click="importBackup">
+          <i class="bi bi-upload"></i> Importar datos
+        </button>
+      </aside>
+
+      <!-- Main content -->
+      <main id="app-content" class="app-content flex-1 p-4 md:p-6 lg:p-8 max-w-6xl mx-auto w-full">
+        <!-- Loading skeleton -->
+        <div x-show="$store.loading.visible" x-cloak>
+          <div class="sk-el sk-heading"></div>
+          <div class="sk-el sk-card"></div>
+          <div class="sk-el sk-card"></div>
+          <div class="sk-el sk-row"></div>
+          <div class="sk-el sk-row"></div>
+        </div>
+        <!-- Content rendered here by appRouter -->
+      </main>
+    </div>
+
+    <!-- Bottom navigation mobile -->
+    <nav class="bottom-nav flex justify-around items-center py-2 px-2 lg:hidden">
+      <template x-for="mod in modules" :key="mod.id">
+        <a :href="'#' + mod.id"
+           class="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors text-xs"
+           :class="currentModule === mod.id ? 'text-primary' : 'text-base-content/50'">
+          <i :class="mod.icono" class="text-lg"></i>
+          <span x-text="mod.titulo" class="text-[10px]"></span>
+        </a>
+      </template>
+    </nav>
+  </div>
+
+  <!-- Search Palette (Cmd+K) -->
+  <div x-data="searchPalette"
+       @keydown.window.cmd.k.prevent="openPalette()"
+       @keydown.window.ctrl.k.prevent="openPalette()"
+       @cmd-k-shortcut.window="openPalette()"
+       @keydown.window="onKeydown($event)">
+    <template x-teleport="body">
+      <div x-show="open" x-cloak class="fixed inset-0 z-[60] flex items-start justify-center pt-[12vh]"
+           @click.away="closePalette">
+        <div class="absolute inset-0 bg-base-300/60 backdrop-blur-sm"></div>
+        <div class="relative w-full max-w-xl">
+          <div class="bg-base-100 rounded-2xl shadow-2xl border border-base-300 overflow-hidden">
+            <!-- Input -->
+            <div class="flex items-center gap-3 px-5 py-4 border-b border-base-200">
+              <svg class="w-5 h-5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              <input x-model="query" type="text" class="sp-search-input flex-1 bg-transparent border-0 outline-none text-base placeholder:text-base-content/30"
+                     placeholder="Buscar módulos...">
+              <kbd class="hidden sm:inline-flex px-2 py-0.5 text-xs rounded bg-base-200 text-base-content/50">ESC</kbd>
+            </div>
+            <!-- Results -->
+            <div class="max-h-80 overflow-y-auto p-2">
+              <template x-if="!hasResults && query.length >= 2">
+                <div class="px-3 py-8 text-center text-sm text-base-content/40">
+                  <svg class="w-8 h-8 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Sin resultados para "<span x-text="query"></span>"
+                </div>
+              </template>
+              <template x-if="!query">
+                <div class="px-3 py-2 text-xs font-semibold text-base-content/40 uppercase tracking-wider">Módulos</div>
+              </template>
+              <template x-for="(item, i) in filtered" :key="i">
+                <template x-if="item.type === 'separator'">
+                  <div class="px-3 py-1.5 text-xs font-semibold text-base-content/30 uppercase tracking-wider">Registros</div>
+                </template>
+                <template x-if="item.type !== 'separator'">
+                  <div @click="selectItem(item)" @mouseenter="keyboardNav = false"
+                       :class="{'bg-primary/10 text-primary': keyboardNav && item._kIdx === selectedIdx, 'hover:bg-base-200': !(keyboardNav && item._kIdx === selectedIdx)}"
+                       class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors">
+                    <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-base-200 text-base-content/60 shrink-0">
+                      <i :class="'bi ' + item.icon" class="text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="text-sm font-medium truncate" x-text="item.title"></div>
+                      <div x-show="item.subtitle" class="text-xs text-base-content/40 truncate" x-text="item.subtitle"></div>
+                    </div>
+                    <span x-show="item.type === 'module'" class="badge badge-ghost badge-sm">módulo</span>
+                  </div>
+                </template>
+              </template>
+            </div>
+            <!-- Footer -->
+            <div class="flex items-center gap-4 px-5 py-2.5 border-t border-base-200 text-xs text-base-content/40">
+              <span class="flex items-center gap-1"><kbd class="kbd kbd-xs">↑↓</kbd> Navegar</span>
+              <span class="flex items-center gap-1"><kbd class="kbd kbd-xs">↵</kbd> Abrir</span>
+              <span class="flex items-center gap-1"><kbd class="kbd kbd-xs">Esc</kbd> Cerrar</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- JS Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.7/dist/dexie.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js" defer></script>
+
+  <!-- Core -->
+  <script src="core/env.js" defer></script>
+  <script src="core/db.js" defer></script>
+  <script src="core/crypto.js" defer></script>
+  <script src="core/ui.js" defer></script>
+  <script src="core/theme.js" defer></script>
+  <script src="core/network.js" defer></script>
+  <script src="core/app.js" defer></script>
+  <script src="core/search-palette.js" defer></script>
+  <script src="core/file-store.js" defer></script>
+  <script src="core/sync.js" defer></script>
+  <script src="core/license.js" defer></script>
+  <script src="core/seed.js" defer></script>
+  <script src="core/main.js" defer></script>
+
+  <!-- Modules (loaded via app.js but declared early) -->
+  <script src="modules/dashboard/module.js" defer></script>
+  <script src="modules/movimientos/module.js" defer></script>
+  <script src="modules/categorias/module.js" defer></script>
+  <script src="modules/reportes/module.js" defer></script>
+
+  <!-- Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function(err) {
+        console.warn('SW registration failed:', err);
+      });
+    }
+  </script>
+
+  <!-- App Shell Alpine Component -->
+  <script>
+    document.addEventListener('alpine:init', function() {
+      Alpine.data('appShell', function() {
+        return {
+          currentModule: 'dashboard',
+          modules: [],
+
+          init: function() {
+            var self = this;
+            this._buildModuleList();
+
+            // Escuchar cambios de módulo
+            document.addEventListener('module-change', function(e) {
+              self.currentModule = e.detail.module || 'dashboard';
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            // Reconstruir cuando cambien los módulos
+            document.addEventListener('modules-updated', function() {
+              self._buildModuleList();
+            });
+
+            // Observar hash inicial
+            var hash = window.location.hash.replace('#', '') || 'dashboard';
+            self.currentModule = hash;
+          },
+
+          _buildModuleList: function() {
+            var list = [];
+            if (APP_CONFIG && APP_CONFIG.modulos) {
+              for (var id in APP_CONFIG.modulos) {
+                if (APP_CONFIG.modulos.hasOwnProperty(id) && APP_CONFIG.modulos[id].activo) {
+                  list.push({
+                    id: id,
+                    titulo: APP_CONFIG.modulos[id].titulo,
+                    icono: APP_CONFIG.modulos[id].icono || 'bi bi-box'
+                  });
+                }
+              }
+            }
+            this.modules = list;
+          },
+
+          exportBackup: function() {
+            if (window.SyncEngine) {
+              window.SyncEngine.exportar();
+            }
+          },
+
+          importBackup: function() {
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.ateje-backup';
+            input.onchange = function(e) {
+              var file = e.target.files[0];
+              if (file && window.SyncEngine) {
+                window.SyncEngine.importar(file);
+              }
+            };
+            input.click();
+          }
+        };
+      });
+    });
+  </script>
+</body>
+</html>

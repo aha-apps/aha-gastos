@@ -1,0 +1,78 @@
+<!-- modules/reportes/module.html — Template Reportes -->
+<div x-data="reportesData()" x-init="init()" class="animate__animated animate__fadeIn">
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <h2 class="text-2xl font-bold flex items-center gap-2">
+      <i class="bi bi-file-earmark-bar-graph text-primary"></i> Reportes
+    </h2>
+    <div class="flex gap-2">
+      <input type="month" class="input input-bordered input-sm" id="rep-mes"
+             onchange="ModReportes.cambiarMes(this.value)">
+      <button class="btn btn-primary btn-sm" onclick="ModReportes.exportarPDF()">
+        <i class="bi bi-file-earmark-pdf"></i> PDF
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="ModReportes.exportarCSV()">
+        <i class="bi bi-file-earmark-spreadsheet"></i> CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="rep-resumen">
+    <div class="skeleton h-20 w-full"></div>
+    <div class="skeleton h-20 w-full"></div>
+    <div class="skeleton h-20 w-full"></div>
+  </div>
+
+  <!-- Bar chart -->
+  <div class="bg-base-100 rounded-xl shadow-sm border border-base-200 p-4 mb-6">
+    <h3 class="font-semibold mb-3 flex items-center gap-2">
+      <i class="bi bi-bar-chart text-primary"></i> Flujo de caja diario
+    </h3>
+    <div class="chart-container" style="position:relative; height:300px; width:100%">
+      <canvas id="rep-barras"></canvas>
+    </div>
+  </div>
+
+  <!-- Detail table -->
+  <div class="bg-base-100 rounded-xl shadow-sm border border-base-200 overflow-hidden">
+    <div class="p-4 border-b border-base-200 flex items-center justify-between">
+      <h3 class="font-semibold">Detalle del mes</h3>
+      <input type="text" class="input input-bordered input-sm max-w-[200px]" placeholder="Buscar..."
+             id="rep-busqueda" oninput="ModReportes.filtrarTabla(this.value)">
+    </div>
+    <div class="overflow-x-auto">
+      <table class="table table-zebra">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Categoría</th>
+            <th>Monto</th>
+            <th>Nota</th>
+          </tr>
+        </thead>
+        <tbody id="rep-tbody">
+          <tr><td colspan="5" class="text-center py-8 text-base-content/40">
+            <div class="skeleton h-8 w-full"></div>
+            <div class="skeleton h-8 w-full mt-2"></div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="rep-empty" class="hidden flex flex-col items-center justify-center py-12 text-base-content/40">
+      <i class="bi bi-inbox text-4xl mb-2"></i>
+      <p class="text-sm">No hay movimientos en este mes</p>
+    </div>
+  </div>
+
+  <!-- IA Stats -->
+  <div class="mt-6 p-4 bg-base-100 rounded-xl shadow-sm border border-base-200">
+    <h3 class="font-semibold mb-2 flex items-center gap-2">
+      <i class="bi bi-robot text-primary"></i> Estadísticas
+    </h3>
+    <div id="rep-ia-stats" class="text-sm text-base-content/70 space-y-1">
+      <p class="skeleton h-4 w-3/4"></p>
+      <p class="skeleton h-4 w-1/2"></p>
+    </div>
+  </div>
+</div>
